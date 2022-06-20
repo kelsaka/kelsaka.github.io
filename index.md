@@ -15,7 +15,7 @@ feature_row:
     alt: "webdesign"
     title: "Webdesign"
     excerpt: "I used to do some webdesign... a long time ago when table-based layouts were state of the art."
-    url: "http://archive.kelsaka.de"
+    url: "http://wwwold.kelsaka.de"
     btn_class: "btn--primary"
     btn_label: "Old webpage"
   - image_path: /assets/images/mm-customizable-feature.png
