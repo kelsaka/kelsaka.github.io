@@ -4,7 +4,7 @@
 Quelle:
   - https://www.karlsbad.de/news?action=view_everything        (alle Teaser, nach Rubrik gruppiert)
   - https://www.karlsbad.de/website/de/gemeinde-buerger/aktuelles/mitteilungsblatt  (Rubrikenbaum)
-Bestehende Artikel werden per ID zusammengeführt (Archiv). Thumbnails werden lokal gespeichert.
+Bestehende Artikel werden per ID zusammengeführt (Archiv). Thumbnails werden nicht kopiert, sondern direkt von karlsbad.de eingebunden.
 Nur Python-Standardbibliothek.
 """
 import html, json, os, re, sys, time, urllib.request
@@ -15,7 +15,6 @@ BASE = "https://www.karlsbad.de"
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUT_DIR = os.path.join(ROOT, "karlsbad-news")
 OUT = os.path.join(OUT_DIR, "articles.json")
-IMG_DIR = os.path.join(OUT_DIR, "img")
 UA = "kelsaka-news-index/1.0 (+https://kelsaka.github.io; 1 Abruf pro Tag)"
 
 BEREICH = {
@@ -127,25 +126,7 @@ def parse_articles(page, tree):
     return arts
 
 
-def fetch_image(src):
-    name = os.path.basename(src)
-    if not re.fullmatch(r"[\w.\-]+\.(jpe?g|png|gif|webp)", name, re.I):
-        return None
-    dest = os.path.join(IMG_DIR, name)
-    if not os.path.exists(dest):
-        try:
-            data = get(BASE + src, binary=True)
-        except Exception as e:  # Bild fehlt: Platzhalter im Frontend
-            print("Bild fehlgeschlagen:", src, e, file=sys.stderr)
-            return None
-        with open(dest, "wb") as f:
-            f.write(data)
-        time.sleep(0.3)
-    return "img/" + name
-
-
 def main():
-    os.makedirs(IMG_DIR, exist_ok=True)
     tree = parse_tree(get(BASE + "/website/de/gemeinde-buerger/aktuelles/mitteilungsblatt"))
     fresh = parse_articles(get(BASE + "/news?action=view_everything"), tree)
 
@@ -162,15 +143,18 @@ def main():
     for a in fresh:
         prev = old.get(a["id"], {})
         src = a.pop("src")
-        a["i"] = fetch_image(src) if src else None
+        a["i"] = src  # Original-Pfad auf karlsbad.de (Thumbnail), wird direkt eingebunden
         a["first"] = prev.get("first", today)
         a["live"] = True
         old[a["id"]] = a
+    for a in old.values():  # Altdaten: lokale Bildpfade -> Original-Pfad
+        if a.get("i") and a["i"].startswith("img/"):
+            a["i"] = "/system/getthumb/images/" + a["i"][4:]
 
     items = sorted(old.values(), key=lambda r: (r["d"], r["id"]), reverse=True)
     with open(OUT, "w", encoding="utf-8") as f:
         f.write("[\n" + ",\n".join(json.dumps(r, ensure_ascii=False) for r in items) + "\n]\n")
-    print(f"{len(fresh)} aktuell, {len(items)} gesamt, Bilder: {len(os.listdir(IMG_DIR))}")
+    print(f"{len(fresh)} aktuell, {len(items)} gesamt")
 
 
 if __name__ == "__main__":

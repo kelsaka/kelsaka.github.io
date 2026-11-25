@@ -13,7 +13,7 @@ search: false
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow, noarchive">
-<meta name="referrer" content="no-referrer">
+<meta name="referrer" content="no-referrer-when-downgrade">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
@@ -367,7 +367,7 @@ function card(r,terms){
   const old=!r.d.startsWith("2026")&&days(r.d)>365;
   const initials=r.c.replace(/^(Karlsbad-|Evang\.|Kath\.)\s*/,"").split(/[\s\-\/]+/).filter(w=>/^[A-ZÄÖÜ0-9]/.test(w)).slice(0,2).map(w=>w[0]).join("")||"KA";
   const ph=`<div class="ph"><b>${esc(initials)}</b><span>${esc(BN[r.b])}</span>${r.i?"<i>Bild nicht verfügbar</i>":"<i>kein Bild</i>"}</div>`;
-  const img=r.i?`<img loading="lazy" alt="" src="${esc(r.i)}" onerror="this.parentNode.classList.add('noimg');this.remove()">`:"";
+  const img=r.i?`<img loading="lazy" alt="" src="https://www.karlsbad.de${esc(r.i)}" onerror="this.parentNode.classList.add('noimg');this.remove()">`:"";
   const url=`https://www.karlsbad.de/news?action=view_one_article&article_id=${r.id}`;
   const path=r.p.length?r.p.join(" › ")+" › "+r.c:r.c;
   return `<article class="card" style="--c:var(--c-${r.b})">
