@@ -11,7 +11,7 @@ search: false
 <meta charset="utf-8">
 <title>Karlsbad Mitteilungsblatt</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="referrer" content="no-referrer">
 <link rel="preload" href="fonts/source-sans-3-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -57,7 +57,7 @@ button,input,select{font:inherit;color:inherit}
 .wrap{max-width:1320px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 
 /* Kopf: Titelzeile und die Leiste "Suche & Filter" bleiben oben stehen; der Filterblock ist standardmäßig eingeklappt */
-.stick{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.stick{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
 header.top{background:var(--surface)}
 .top .wrap{display:flex;gap:16px;align-items:center;padding-block:10px}
 .brand{display:flex;flex-direction:column;line-height:1.1;min-width:0;text-decoration:none}
@@ -65,14 +65,17 @@ header.top{background:var(--surface)}
 .brand span{font-size:.8rem;color:var(--muted)}
 
 /* Suche + Filter in einem Block, scrollt mit der Seite */
-.tools{border-top:1px solid var(--line)}
+.tools{position:relative;border-top:1px solid var(--line)}
+.scrim{position:fixed;inset:0;z-index:8;background:rgba(10,16,14,.4);touch-action:none}
 .toolbar{display:flex;align-items:center;gap:10px 14px;padding-block:8px;min-width:0}
 .toolbtn{flex:none;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 14px;cursor:pointer;font-weight:600}
 .toolbtn[aria-expanded="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .toolbtn .chev{width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
 .toolbtn[aria-expanded="true"] .chev{transform:rotate(-135deg) translateY(-2px)}
 .badge{background:var(--accent);color:var(--accent-ink);border-radius:999px;font-size:.75rem;min-width:20px;height:20px;display:inline-grid;place-items:center;padding:0 6px}
-.panel{border-top:1px solid var(--line);padding-block:16px;display:flex;flex-direction:column;gap:16px;max-height:min(75vh,calc(100vh - 150px));overflow:auto;overscroll-behavior:contain}
+/* Der Filterblock liegt als Overlay unter der Leiste (verschiebt den Seiteninhalt nicht) und scrollt in sich. */
+.panel{position:absolute;left:0;right:0;top:100%;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 14px 28px rgba(0,0,0,.2);max-height:calc(100vh - 130px);max-height:calc(100dvh - 130px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.panelin{display:flex;flex-direction:column;gap:16px;padding-block:16px}
 .panel h3{margin:0 0 8px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .search{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:0 14px;min-width:0}
 .search svg{flex:none;color:var(--muted)}
@@ -107,6 +110,8 @@ header.top{background:var(--surface)}
 .sub input{margin-top:2px;accent-color:var(--c)}
 .sub .lbl{min-width:0;overflow-wrap:anywhere}
 .hint{font-size:.8rem;color:var(--muted);margin:0}
+.iconbtn{flex:none;margin-left:auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--bg);display:grid;place-items:center;cursor:pointer;color:var(--ink)}
+.iconbtn:hover{border-color:var(--accent);color:var(--accent)}
 .reset{flex:none;border:0;background:none;color:var(--accent);font-weight:600;cursor:pointer;padding:0;text-align:left;white-space:nowrap}
 .count{flex:none;font-family:var(--font-display);font-size:1.1rem;font-weight:700;white-space:nowrap}
 .count small{font-family:var(--font-body);font-weight:400;font-size:.9rem;color:var(--muted)}
@@ -183,10 +188,11 @@ mark{background:var(--hl);color:var(--hl-ink);border-radius:2px;padding:0 1px}
         </button>
         <div class="count" id="count">–</div>
         <div class="active" id="active"></div>
-        <button class="reset" id="copylink" type="button" hidden title="Link zu dieser Ansicht kopieren">Link kopieren</button>
-        <button class="reset" id="reset" type="button" hidden>Zurücksetzen</button>
+        <button class="iconbtn" id="reset" type="button" hidden aria-label="Alle Filter zurücksetzen" title="Alle Filter zurücksetzen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
       </div>
+    </div>
       <section class="panel" id="panel" aria-label="Suche und Filter" hidden>
+<div class="panelin wrap">
         <label class="search">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
           <input id="q" type="search" placeholder="Suchen in Titel, Teaser, Rubrik … z. B. „Weihnachtsmarkt“" autocomplete="off" aria-label="Artikel durchsuchen">
@@ -207,10 +213,11 @@ mark{background:var(--hl);color:var(--hl-ink);border-radius:2px;padding:0 1px}
           <summary>Rubriken nach Bereich</summary>
           <ul class="tree" id="tree"></ul>
         </details>
+</div>
       </section>
-    </div>
   </div>
 </div>
+<div class="scrim" id="scrim" hidden></div>
 
 <main class="wrap">
   <div class="grid" id="grid"></div>
@@ -309,7 +316,7 @@ function renderActive(){
   if(S.zeit!=="all")t.push(["Zeitraum: "+ZEIT.find(z=>z.k===S.zeit).n,"zeit",""]);
   if(S.q)t.push([`„${S.q}“`,"q",""]);
   if(S.img)t.push(["mit Bild","img",""]);
-  $("badge").textContent=t.length;$("badge").hidden=!t.length;$("reset").hidden=!t.length;$("copylink").hidden=!t.length;
+  $("badge").textContent=t.length;$("badge").hidden=!t.length;$("reset").hidden=!t.length;
   $("active").innerHTML=t.map(([l,k,v])=>`<span class="tag">${esc(l)}<button type="button" aria-label="Filter ${esc(l)} entfernen" data-rm="${k}" data-v="${esc(v)}">×</button></span>`).join("");
 }
 function card(r,terms){
@@ -337,7 +344,7 @@ function render(){
   renderBereiche();renderTree();renderSeg();renderActive();
   syncUrl();
 }
-const upd=()=>{S.shown=PAGE;render()};
+const upd=()=>{S.shown=PAGE;render();window.scrollTo(0,0)};
 
 /* Zustand <-> URL (?q=…&b=sport&s=sport|SV%20Langensteinbach&ort=…&z=…&sort=…&img=1), damit Ansichten teilbar sind */
 function syncUrl(push){
@@ -365,12 +372,6 @@ function readUrl(){
   $("q").value=S.q;$("sort").value=S.sort;$("onlyimg").checked=S.img;
   const a=P.get("a"); S.open=/^\d{1,9}$/.test(a||"")?a:null;
 }
-async function copyLink(btn){
-  const url=location.href;let ok=false;
-  try{await navigator.clipboard.writeText(url);ok=true}catch(e){
-    try{const t=document.createElement("textarea");t.value=url;t.style.cssText="position:fixed;opacity:0";document.body.appendChild(t);t.select();ok=document.execCommand("copy");t.remove()}catch(e2){}}
-  const old=btn.textContent;btn.textContent=ok?"Link kopiert ✓":"Link in Adresszeile";setTimeout(()=>btn.textContent=old,1800);
-}
 
 document.addEventListener("click",e=>{
   const al=e.target.closest("a[data-id]");
@@ -381,7 +382,6 @@ document.addEventListener("click",e=>{
   else if(t.dataset.o!==undefined){S.ort=t.dataset.o||null;upd()}
   else if(t.classList.contains("label")){S.s=new Set([t.dataset.s]);S.b.clear();upd();window.scrollTo({top:0,behavior:"smooth"})}
   else if(t.classList.contains("pill")){S.b=new Set([t.dataset.b]);S.s.clear();upd();window.scrollTo({top:0,behavior:"smooth"})}
-  else if(t.id==="copylink"){copyLink(t)}
   else if(t.id==="totop"){window.scrollTo({top:0,behavior:"smooth"})}
   else if(t.dataset.rm){const k=t.dataset.rm,v=t.dataset.v;
     if(k==="b")S.b.delete(v);if(k==="s")S.s.delete(v);if(k==="ort")S.ort=null;if(k==="zeit")S.zeit="all";if(k==="q"){S.q="";$("q").value="";if(S.sort==="rel"){S.sort="new";$("sort").value="new"}}if(k==="img"){S.img=false;$("onlyimg").checked=false}upd()}
@@ -429,7 +429,9 @@ $("ovclose").addEventListener("click",closeArticle);
 $("ov").addEventListener("click",e=>{if(e.target===$("ov"))closeArticle()});
 
 function toggleTools(open){const b=$("toolbtn"),pn=$("panel");open=open??b.getAttribute("aria-expanded")!=="true";
-  b.setAttribute("aria-expanded",open);pn.hidden=!open;if(open)$("q").focus({preventScroll:true})}
+  b.setAttribute("aria-expanded",open);pn.hidden=!open;$("scrim").hidden=!open;
+  if(open&&matchMedia("(hover:hover)").matches)$("q").focus({preventScroll:true})}
+$("scrim").addEventListener("click",()=>toggleTools(false));
 $("toolbtn").addEventListener("click",()=>toggleTools());
 document.addEventListener("keydown",e=>{
   if(e.key==="/"&&!/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)){e.preventDefault();toggleTools(true)}
