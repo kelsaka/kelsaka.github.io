@@ -18,7 +18,7 @@ search: false
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
 body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}
-/* Layout: sticky Kopfzeile mit Suche · links Filterspalte (Bereiche → Rubriken, Ortsteil, Zeitraum) · rechts Kartenraster. Unter 860px wird die Filterspalte zur ausklappbaren Leiste. */
+/* Layout: feste Titelzeile · darunter ein Block mit Suche und allen Filtern (scrollt mit) · Kartenraster · Nach-oben-Knopf. */
 :root{
   --bg:#f3f5f4; --surface:#ffffff; --ink:#18211e; --muted:#5b6762; --line:#dbe1de;
   --accent:#1f6b52; --accent-ink:#ffffff; --hl:#fde68a; --hl-ink:#18211e;
@@ -46,124 +46,91 @@ button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wrap{max-width:1320px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 
-/* Kopf */
+/* Kopf: nur die Titelzeile bleibt oben stehen */
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
-.top .wrap{display:flex;gap:16px;align-items:center;padding-block:12px;flex-wrap:wrap}
-.brand{display:flex;flex-direction:column;line-height:1.1;margin-right:auto;min-width:0}
+.top .wrap{display:flex;gap:16px;align-items:center;padding-block:12px}
+.brand{display:flex;flex-direction:column;line-height:1.1;min-width:0;text-decoration:none}
 .brand b{font-family:var(--font-display);font-size:1.35rem;letter-spacing:-.01em}
 .brand span{font-size:.8rem;color:var(--muted)}
-.tabs{display:flex;gap:4px}
-.tabs a{text-decoration:none;padding:6px 12px;border-radius:999px;font-weight:600;font-size:.9rem;color:var(--muted)}
-.tabs a[aria-current="page"]{background:var(--ink);color:var(--bg)}
-.search{flex:1 1 360px;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:0 14px;min-width:0;order:3}
+
+/* Suche + Filter in einem Block, scrollt mit der Seite */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-block:16px;display:flex;flex-direction:column;gap:16px}
+.panel h3{margin:0 0 8px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.search{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:0 14px;min-width:0}
 .search svg{flex:none;color:var(--muted)}
-.search input{border:0;background:transparent;padding:10px 0;width:100%;outline:none;min-width:0}
+.search input{border:0;background:transparent;padding:11px 0;width:100%;outline:none;min-width:0}
 .search:focus-within{border-color:var(--accent)}
 .search kbd{font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px}
-
-/* Bereich-Leiste */
-.bereiche{display:flex;gap:8px;overflow-x:auto;padding-block:12px;scrollbar-width:thin}
-.chip{flex:none;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:.9rem}
+.bereiche{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:.9rem}
 .chip .dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
 .chip .n{font-weight:400;color:var(--muted);font-variant-numeric:tabular-nums;font-size:.8rem}
 .chip[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:var(--surface)}
 .chip[aria-pressed="true"] .dot{background:var(--surface)}
 .chip[aria-pressed="true"] .n{color:inherit;opacity:.85}
-
-/* Hauptlayout */
-.main{display:grid;grid-template-columns:270px minmax(0,1fr);gap:28px;padding-block:8px 48px}
-aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 80px);align-self:start;max-height:calc(100vh - 100px);overflow:auto;display:flex;flex-direction:column;gap:22px;padding-right:4px}
-aside h3{margin:0 0 8px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.filters{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:flex-start}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.88rem}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.tree{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.chk{display:flex;gap:8px;align-items:center;font-size:.9rem;padding-block:4px}
+.panel select{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 6px}
+.rub>summary{cursor:pointer;font-weight:600;font-size:.93rem;list-style:none;display:flex;align-items:center;gap:8px;width:max-content}
+.rub>summary::-webkit-details-marker{display:none}
+.rub>summary::before,.tree summary::before{content:"";width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s;flex:none;margin-right:2px}
+.rub[open]>summary::before,.tree details[open]>summary::before{transform:rotate(45deg)}
+.tree{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px 24px;align-items:start}
 .tree li>details>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;font-weight:600;font-size:.93rem}
 .tree summary::-webkit-details-marker{display:none}
-.tree summary::before{content:"";width:6px;height:6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s;flex:none;margin-right:2px}
-.tree details[open]>summary::before{transform:rotate(45deg)}
 .tree summary .dot{width:9px;height:9px;border-radius:50%;background:var(--c);flex:none}
 .tree summary .n,.sub label .n{margin-left:auto;color:var(--muted);font-weight:400;font-size:.8rem;font-variant-numeric:tabular-nums}
 .tree summary:hover,.sub label:hover{background:var(--bg)}
-.sub{list-style:none;margin:0 0 6px 22px;padding:0;display:flex;flex-direction:column}
+.sub{list-style:none;margin:0 0 6px 22px;padding:0;display:flex;flex-direction:column;max-height:320px;overflow:auto}
 .sub label{display:flex;align-items:flex-start;gap:8px;padding:3px 6px;border-radius:6px;cursor:pointer;font-size:.88rem;line-height:1.3}
 .sub input{margin-top:2px;accent-color:var(--c)}
-.sub .lbl{min-width:0}
+.sub .lbl{min-width:0;overflow-wrap:anywhere}
 .hint{font-size:.8rem;color:var(--muted);margin:0}
 .reset{border:0;background:none;color:var(--accent);font-weight:600;cursor:pointer;padding:0;text-align:left}
-
-/* Ergebnisleiste */
-.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-bottom:16px}
+.statusbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;border-top:1px solid var(--line);padding-top:14px}
 .count{font-family:var(--font-display);font-size:1.25rem;font-weight:700}
 .count small{font-family:var(--font-body);font-weight:400;font-size:.9rem;color:var(--muted)}
 .active{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0}
-.tag{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 10px}
-.tag button{border:0;background:var(--bg);border-radius:50%;width:20px;height:20px;cursor:pointer;line-height:1}
-.sort{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:.88rem;color:var(--muted)}
-.sort select{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 6px}
-.filterbtn{display:none}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 10px}
+.tag button{border:0;background:var(--surface);border-radius:50%;width:20px;height:20px;cursor:pointer;line-height:1}
 
-/* Karten */
+/* Karten: die ganze Karte ist ein Link (Stretched Link über der Überschrift) */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-width:0;transition:border-color .15s, transform .15s}
-.card:hover{border-color:var(--c)}
-.card .img{aspect-ratio:3/2;max-width:100%;background:color-mix(in srgb,var(--c) 14%,var(--surface));position:relative;overflow:hidden}
-.card .img img{position:relative;z-index:1;width:100%;height:100%;object-fit:cover;display:block}
-.card .img.noimg{aspect-ratio:auto;height:64px}
-.card .img.noimg .ph{flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;padding:0 14px}
-.card .img.noimg .ph b{font-size:1.2rem}
-.card .img.noimg .ph i{top:50%;transform:translateY(-50%)}
-.ph{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:12px 14px;gap:2px;color:var(--c)}
-.ph b{font-family:var(--font-display);font-size:1.6rem;line-height:1;letter-spacing:-.02em;opacity:.9}
-.ph span{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;opacity:.8}
-.ph i{position:absolute;top:10px;right:12px;font-style:normal;font-size:.7rem;border:1px dashed currentColor;border-radius:4px;padding:1px 6px;opacity:.7}
+.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-width:0;transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:var(--c);box-shadow:0 2px 10px color-mix(in srgb,var(--c) 18%,transparent)}
+.card:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.card .img{aspect-ratio:3/2;max-width:100%;background:color-mix(in srgb,var(--c) 14%,var(--surface));overflow:hidden}
+.card .img img{width:100%;height:100%;object-fit:cover;display:block}
 .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
-.meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
-.label{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);border-radius:4px;padding:1px 8px;max-width:100%;cursor:pointer;border:0;font-size:.78rem;text-align:left}
+.meta{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+.pill,.label{position:relative;z-index:2;display:inline-flex;align-items:center;border:0;border-radius:4px;padding:1px 8px;max-width:100%;cursor:pointer;font-size:.78rem;font-weight:700;text-align:left}
+.pill{background:var(--c);color:var(--surface)}
+.label{color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent)}
+.arch{font-size:.75rem}
 .date{font-variant-numeric:tabular-nums;margin-left:auto;white-space:nowrap}
 .date.old{color:var(--c-feuerwehr)}
 .card h2{font-family:var(--font-display);font-weight:700;font-size:1.12rem;line-height:1.25;margin:0;text-wrap:balance;overflow-wrap:anywhere}
+.card h2 a{text-decoration:none;color:inherit}
+.card h2 a::after{content:"";position:absolute;inset:0;z-index:1}
+.card h2 a:focus-visible{outline:none}
+.card:hover h2 a{text-decoration:underline}
 .card p{margin:0;color:var(--muted);font-size:.93rem;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .more{margin-top:auto;padding-top:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.88rem}
-.more a{font-weight:700;color:var(--accent);text-decoration:none}
-.more a:hover{text-decoration:underline}
+.more .go{font-weight:700;color:var(--accent)}
+.card:hover .more .go{text-decoration:underline}
 .orte{display:flex;gap:4px;flex-wrap:wrap}
 .orte span{font-size:.72rem;border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--muted)}
 mark{background:var(--hl);color:var(--hl-ink);border-radius:2px;padding:0 1px}
 .empty{padding:48px 16px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r)}
 .loadmore{display:block;margin:24px auto 0;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:10px 22px;font-weight:700;cursor:pointer}
-.proto{font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);padding-block:16px 32px}
+.proto{font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);margin:32px 0 0;padding-block:16px 32px}
+.totop{position:fixed;z-index:6;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--ink);color:var(--bg);display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.totop:hover{background:var(--accent);color:var(--accent-ink)}
 
-/* Konzept */
-.doc{max-width:860px;padding-block:28px 64px}
-.doc h1{font-family:var(--font-display);font-size:2rem;line-height:1.15;margin:0 0 8px;text-wrap:balance}
-.doc h2{font-family:var(--font-display);font-size:1.3rem;margin:36px 0 10px}
-.doc p,.doc li{max-width:68ch}
-.doc .lead{color:var(--muted);font-size:1.05rem}
-.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0}
-.facts div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
-.facts b{display:block;font-family:var(--font-display);font-size:1.6rem;font-variant-numeric:tabular-nums}
-.facts span{font-size:.85rem;color:var(--muted)}
-.doc code{font-size:.85em;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:0 4px;overflow-wrap:anywhere}
-.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
-.tbl table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:560px}
-.tbl th,.tbl td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-.tbl tr:last-child td{border-bottom:0}
-.tbl th{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.flow{overflow-x:auto}
-.steps{counter-reset:s;list-style:none;padding:0;display:flex;flex-direction:column;gap:10px}
-.steps li{counter-increment:s;display:grid;grid-template-columns:32px 1fr;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
-.steps li::before{content:counter(s);font-family:var(--font-display);font-weight:700;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink)}
-.steps b{display:block}
-
-@media (max-width:860px){
-  .main{grid-template-columns:minmax(0,1fr)}
-  aside{position:static;max-height:none;display:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
-  aside.open{display:flex}
-  .filterbtn{display:inline-flex;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 10px;cursor:pointer;font-weight:600}
-  .sort{margin-left:0}
-  .search kbd{display:none}
-}
+@media (max-width:600px){.filters{gap:14px 20px}.tree{grid-template-columns:minmax(0,1fr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -172,117 +139,45 @@ mark{background:var(--hl);color:var(--hl-ink);border-radius:2px;padding:0 1px}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><b>Mitteilungsblatt Karlsbad</b><span>Alle Artikel aller Rubriken</span></div>
-    <nav class="tabs" aria-label="Ansicht">
-      <a href="#artikel" id="tab-artikel">Artikel</a>
-      <a href="#konzept" id="tab-konzept">Konzept &amp; Strategie</a>
-    </nav>
-    <label class="search" id="searchbox">
+    <a class="brand" href="./"><b>Mitteilungsblatt Karlsbad</b><span>Alle Artikel aller Rubriken</span></a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="panel" aria-label="Suche und Filter">
+    <label class="search">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" placeholder="Suchen in Titel, Teaser, Rubrik … z. B. „Weihnachtsmarkt“" autocomplete="off" aria-label="Artikel durchsuchen">
       <kbd>/</kbd>
     </label>
-  </div>
-</header>
-
-<section id="view-artikel">
-  <div class="wrap"><div class="bereiche" id="bereiche" role="group" aria-label="Bereiche"></div></div>
-  <div class="wrap main">
-    <aside id="aside" aria-label="Filter">
-      <div>
-        <h3>Zeitraum</h3>
-        <div class="seg" id="zeit"></div>
-      </div>
-      <div>
-        <h3>Ortsteil</h3>
-        <div class="seg" id="orte"></div>
-      </div>
-      <div>
-        <h3>Rubriken</h3>
-        <ul class="tree" id="tree"></ul>
-      </div>
-      <div>
-        <h3>Weitere</h3>
-        <label class="hint" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="onlyimg"> nur Artikel mit Bild</label>
-      </div>
+    <div>
+      <h3>Bereiche</h3>
+      <div class="bereiche" id="bereiche" role="group" aria-label="Bereiche"></div>
+    </div>
+    <div class="filters">
+      <div><h3>Zeitraum</h3><div class="seg" id="zeit"></div></div>
+      <div><h3>Ortsteil</h3><div class="seg" id="orte"></div></div>
+      <div><h3>Weitere</h3><label class="chk"><input type="checkbox" id="onlyimg"> nur Artikel mit Bild</label></div>
+      <div><h3><label for="sort">Sortierung</label></h3>
+        <select id="sort"><option value="new">Neueste zuerst</option><option value="old">Älteste zuerst</option><option value="rel">Relevanz (Suche)</option><option value="cat">Nach Rubrik</option></select></div>
+    </div>
+    <details class="rub">
+      <summary>Rubriken nach Bereich</summary>
+      <ul class="tree" id="tree"></ul>
+    </details>
+    <div class="statusbar">
+      <div class="count" id="count">–</div>
+      <div class="active" id="active"></div>
       <button class="reset" id="reset" type="button">Alle Filter zurücksetzen</button>
-    </aside>
-    <div style="min-width:0">
-      <div class="bar">
-        <button class="filterbtn" id="filterbtn" type="button" aria-expanded="false">Filter</button>
-        <div class="count" id="count">–</div>
-        <div class="active" id="active"></div>
-        <label class="sort">Sortierung
-          <select id="sort"><option value="new">Neueste zuerst</option><option value="old">Älteste zuerst</option><option value="rel">Relevanz (Suche)</option><option value="cat">Nach Rubrik</option></select>
-        </label>
-      </div>
-      <div class="grid" id="grid"></div>
-      <button class="loadmore" id="more" type="button" hidden>Weitere Artikel laden</button>
     </div>
-  </div>
-  <div class="wrap proto">Inhalte und Bilder: Gemeinde Karlsbad, <a href="https://www.karlsbad.de/news?action=view_everything" target="_blank" rel="noopener">karlsbad.de</a>. Diese Übersicht zeigt nur Teaser; alle Links führen zum Originalartikel. Täglich automatisch aktualisiert. Neuester Artikel: <span id="stand">–</span>.</div>
-</section>
+  </section>
 
-<section id="view-konzept" hidden>
-  <div class="wrap doc">
-    <h1>Konzept &amp; Strategie</h1>
-    <p class="lead">Analyse der heutigen Struktur, Plan für die neue Oberfläche und ein Vorschlag, wie die Inhalte automatisch und schonend abgeholt werden.</p>
+  <div class="grid" id="grid"></div>
+  <button class="loadmore" id="more" type="button" hidden>Weitere Artikel laden</button>
+  <p class="proto">Inhalte und Bilder: Gemeinde Karlsbad, <a href="https://www.karlsbad.de/news?action=view_everything" target="_blank" rel="noopener">karlsbad.de</a>. Diese Übersicht zeigt nur Teaser; alle Links führen zum Originalartikel. Täglich automatisch aktualisiert. Neuester Artikel: <span id="stand">–</span>.</p>
+</main>
 
-    <div class="facts">
-      <div><b>680</b><span>Artikel in der Gesamtansicht (Analyse 23.11.2026)</span></div>
-      <div><b>139</b><span>Rubriken mit Inhalt</span></div>
-      <div><b>23</b><span>Hauptrubriken im Rubrikenbaum</span></div>
-      <div><b>309</b><span>Artikel ohne Bild</span></div>
-      <div><b>2008–2026</b><span>Spanne der Datumsangaben</span></div>
-    </div>
-
-    <h2>1 · Heutige Struktur</h2>
-    <ul>
-      <li><b>Gesamtansicht</b> <code>/news?action=view_everything</code>: eine einzige HTML-Seite (≈ 525 KB), alle aktuell sichtbaren Artikel, nach Rubrik gruppiert. Keine Filter, keine Suche, kein Inhaltsverzeichnis, keine Sortierung nach Datum.</li>
-      <li><b>Rubrikenbaum</b> unter <code>/website/de/gemeinde-buerger/aktuelles/mitteilungsblatt</code>: bis zu 4 Ebenen, z. B. <i>Gruppen, Vereine und Initiativen → Sport → SV Langensteinbach → Handball</i>. Viele Knoten sind leer.</li>
-      <li><b>Rubrik-Seite</b> <code>/news?action=view_navigator&amp;category_id=…</code>, <b>Archiv</b> <code>…action=view_category_archive&amp;category_id=…</code>.</li>
-      <li><b>Artikel</b> <code>/news?action=view_one_article&amp;article_id=…</code> mit Volltext (<code>.wysiwyg_1</code>).</li>
-      <li><b>Thumbnails</b> <code>/system/getthumb/images/__tn4__ecics_…_195_130.jpg</code> (195×130 px).</li>
-      <li>Kein RSS, kein JSON, keine Sitemap für News. <code>robots.txt</code> sperrt nur <code>/buergerservice/</code>.</li>
-    </ul>
-    <p>Probleme: Rubriknamen sind nicht eindeutig (<i>Karlsbad-Auerbach</i> gibt es unter „Amtliche Bekanntmachungen“ und unter „Kirchen“). In der Gesamtansicht fehlt die Hierarchie. Veraltete Einträge (z. B. 2009/2010) stehen gleichrangig neben aktuellen.</p>
-
-    <h2>2 · Markup der Gesamtansicht</h2>
-    <div class="tbl"><table>
-      <thead><tr><th>Feld</th><th>Selektor</th><th>Beispiel</th></tr></thead>
-      <tbody>
-        <tr><td>Rubrik-Block</td><td><code>.news-cat-container &gt; h1.news-cat-header</code></td><td>Redaktionelle Berichte</td></tr>
-        <tr><td>Artikel</td><td><code>.news-article-teaser &gt; a.clearfix[href]</code></td><td>article_id=135664</td></tr>
-        <tr><td>Rubrik + Datum</td><td><code>p.subtitle</code> (<code>span.cat</code> | TT.MM.JJJJ)</td><td>17.11.2026</td></tr>
-        <tr><td>Titel</td><td><code>h2</code></td><td>Feuerwehr Karlsbad blickt …</td></tr>
-        <tr><td>Bild</td><td><code>img[src]</code> (optional)</td><td>__tn4__ecics_66684_82873_195_130.jpg</td></tr>
-        <tr><td>Teaser</td><td><code>p.content</code> (gekürzt mit „…“)</td><td>Die Hauptversammlung …</td></tr>
-      </tbody>
-    </table></div>
-
-    <h2>3 · Plan für die Oberfläche</h2>
-    <ul>
-      <li><b>Eine Ansicht für alles</b>: Kartenraster mit Bild, Rubrik-Label, Datum, Titel, Teaser und Link zum Originalartikel.</li>
-      <li><b>9 Bereiche</b> als farbige Schnellfilter oben. Sie fassen die 23 Hauptrubriken verständlich zusammen: Rathaus &amp; Amtliches, Bürgerschaft &amp; Soziales, Wirtschaft, Feuerwehr &amp; Rettung, Politik, Schulen &amp; Kitas, Kirchen, Sport, Vereine &amp; Kultur.</li>
-      <li><b>Rubrikenbaum</b> links mit Zählern; nur Rubriken mit Inhalt werden gezeigt. Mehrfachauswahl.</li>
-      <li><b>Ortsteil-Filter</b> (Auerbach, Ittersbach, Langensteinbach, Mutschelbach, Spielberg), abgeleitet aus Rubrik und Text.</li>
-      <li><b>Zeitraum</b> (7 Tage, 30 Tage, dieses Jahr, älter): blendet Altlasten aus und markiert sie rot.</li>
-      <li><b>Volltextsuche</b> über Titel, Teaser und Rubrik, umlaut- und groß/klein-tolerant, mit Hervorhebung und Relevanz-Sortierung.</li>
-      <li>Filterzustand in der URL (für teilbare Links), mobil einklappbare Filter.</li>
-    </ul>
-
-    <h2>4 · Strategie, um an die Inhalte zu kommen</h2>
-    <ol class="steps">
-      <li><div><b>Eine Anfrage pro Lauf</b>Die Gesamtansicht liefert alle Teaser auf einmal. Dazu einmal der Rubrikenbaum für die Hierarchie. Zwei Requests statt 140 Rubrikseiten.</div></li>
-      <li><div><b>Parser (Python, BeautifulSoup)</b>Liest pro Artikel ID, Datum, Titel, Teaser, Bild-URL und Rubrik. Die Rubrik wird über die Reihenfolge der Blöcke dem Baum zugeordnet (category_id und Pfad), weil die Namen nicht eindeutig sind.</div></li>
-      <li><div><b>GitHub Action, täglich</b>Cron z. B. 05:17 Uhr. Schreibt <code>data/karlsbad-news.json</code> ins Repo und baut die statische Seite auf GitHub Pages neu. Kein eigener Server nötig.</div></li>
-      <li><div><b>Eigenes Archiv aufbauen</b>Neue Läufe werden per <code>article_id</code> mit dem Bestand zusammengeführt (<code>first_seen</code>, <code>last_seen</code>). So bleiben Artikel auffindbar, die aus der Gesamtansicht verschwinden. Einmalig optional die Rubrik-Archive abrufen.</div></li>
-      <li><div><b>Optional: Volltext</b>Nur für neue IDs die Artikelseite laden (gedrosselt, z. B. 1 Request/s), um die Suche auf den ganzen Text auszudehnen.</div></li>
-      <li><div><b>Schonend und fair</b>Eindeutiger User-Agent, Caching über ETag/Last-Modified, nur Teaser und Link zeigen, Quelle nennen. Am besten die Gemeinde kurz informieren; vielleicht gibt es intern einen Export oder einen RSS-Feed des CMS.</div></li>
-    </ol>
-    <p class="hint">Fallback, falls sich das Markup ändert: Action schlägt fehl, wenn weniger als 50 % der bisherigen Artikel gefunden werden, und lässt die alten Daten stehen.</p>
-  </div>
-</section>
+<button class="totop" id="totop" type="button" hidden aria-label="Nach oben"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
 
 <script>
 const BEREICHE=[
@@ -365,18 +260,16 @@ function renderActive(){
 }
 function card(r,terms){
   const old=!r.d.startsWith("2026")&&days(r.d)>365;
-  const initials=r.c.replace(/^(Karlsbad-|Evang\.|Kath\.)\s*/,"").split(/[\s\-\/]+/).filter(w=>/^[A-ZÄÖÜ0-9]/.test(w)).slice(0,2).map(w=>w[0]).join("")||"KA";
-  const ph=`<div class="ph"><b>${esc(initials)}</b><span>${esc(BN[r.b])}</span>${r.i?"<i>Bild nicht verfügbar</i>":"<i>kein Bild</i>"}</div>`;
-  const img=r.i?`<img loading="lazy" alt="" src="https://www.karlsbad.de${esc(r.i)}" onerror="this.parentNode.classList.add('noimg');this.remove()">`:"";
+  const img=r.i?`<div class="img"><img loading="lazy" alt="" src="https://www.karlsbad.de${esc(r.i)}" onerror="this.parentNode.remove()"></div>`:"";
   const url=`https://www.karlsbad.de/news?action=view_one_article&article_id=${r.id}`;
   const path=r.p.length?r.p.join(" › ")+" › "+r.c:r.c;
   return `<article class="card" style="--c:var(--c-${r.b})">
-    <div class="img${r.i?"":" noimg"}">${ph}${img}</div>
+    ${img}
     <div class="body">
-      <div class="meta"><button type="button" class="label" title="${esc(path)}" data-s="${esc(r.b+"|"+r.s)}">${hl(r.c,terms)}</button>${r.live===false?'<span title="Nicht mehr in der Gesamtansicht von karlsbad.de">Archiv</span>':""}<time class="date${old?" old":""}" datetime="${r.d}" ${old?'title="Älter als ein Jahr"':""}>${fmt(r.d)}</time></div>
-      <h2>${hl(r.t,terms)}</h2>
+      <div class="meta"><button type="button" class="pill" data-b="${r.b}" title="Alle Artikel im Bereich ${esc(BN[r.b])}">${esc(BN[r.b])}</button><button type="button" class="label" title="${esc(path)}" data-s="${esc(r.b+"|"+r.s)}">${hl(r.c,terms)}</button>${r.live===false?'<span class="arch" title="Nicht mehr in der Gesamtansicht von karlsbad.de">Archiv</span>':""}<time class="date${old?" old":""}" datetime="${r.d}" ${old?'title="Älter als ein Jahr"':""}>${fmt(r.d)}</time></div>
+      <h2><a href="${url}" target="_blank" rel="noopener">${hl(r.t,terms)}</a></h2>
       <p>${hl(r.x,terms)}</p>
-      <div class="more"><span class="orte">${r.o.map(o=>`<span>${o}</span>`).join("")}</span><a href="${url}" target="_blank" rel="noopener">Zum Artikel ↗</a></div>
+      <div class="more"><span class="orte">${r.o.map(o=>`<span>${o}</span>`).join("")}</span><span class="go">Zum Artikel ↗</span></div>
     </div></article>`;
 }
 function render(){
@@ -398,11 +291,12 @@ document.addEventListener("click",e=>{
   else if(t.dataset.z){S.zeit=t.dataset.z;upd()}
   else if(t.dataset.o!==undefined){S.ort=t.dataset.o||null;upd()}
   else if(t.classList.contains("label")){S.s=new Set([t.dataset.s]);S.b.clear();upd();window.scrollTo({top:0,behavior:"smooth"})}
+  else if(t.classList.contains("pill")){S.b=new Set([t.dataset.b]);S.s.clear();upd();window.scrollTo({top:0,behavior:"smooth"})}
+  else if(t.id==="totop"){window.scrollTo({top:0,behavior:"smooth"})}
   else if(t.dataset.rm){const k=t.dataset.rm,v=t.dataset.v;
     if(k==="b")S.b.delete(v);if(k==="s")S.s.delete(v);if(k==="ort")S.ort=null;if(k==="zeit")S.zeit="all";if(k==="q"){S.q="";$("q").value=""}if(k==="img"){S.img=false;$("onlyimg").checked=false}upd()}
   else if(t.id==="reset"||t.hasAttribute("data-resetall")){S.b.clear();S.s.clear();S.ort=null;S.zeit="all";S.q="";S.img=false;$("q").value="";$("onlyimg").checked=false;upd()}
   else if(t.id==="more"){S.shown+=PAGE;render()}
-  else if(t.id==="filterbtn"){const a=$("aside");a.classList.toggle("open");t.setAttribute("aria-expanded",a.classList.contains("open"))}
 });
 document.addEventListener("change",e=>{
   const s=e.target.dataset?.s;if(s){e.target.checked?S.s.add(s):S.s.delete(s);upd()}
@@ -412,11 +306,9 @@ document.addEventListener("change",e=>{
 let deb;$("q").addEventListener("input",e=>{clearTimeout(deb);deb=setTimeout(()=>{S.q=e.target.value.trim();if(S.q&&S.sort==="new"){S.sort="rel";$("sort").value="rel"}upd()},120)});
 document.addEventListener("keydown",e=>{if(e.key==="/"&&document.activeElement.tagName!=="INPUT"){e.preventDefault();$("q").focus()}});
 
-function route(){const k=location.hash==="#konzept"?"konzept":"artikel";
-  $("view-artikel").hidden=k!=="artikel";$("view-konzept").hidden=k!=="konzept";$("searchbox").style.visibility=k==="artikel"?"visible":"hidden";
-  $("tab-artikel").toggleAttribute("aria-current",k==="artikel");$("tab-konzept").toggleAttribute("aria-current",k==="konzept");
-  if(k==="artikel")$("tab-artikel").setAttribute("aria-current","page");else $("tab-konzept").setAttribute("aria-current","page");}
-addEventListener("hashchange",route);route();
+const tt=$("totop");
+const onScroll=()=>{tt.hidden=window.scrollY<400};
+addEventListener("scroll",onScroll,{passive:true});onScroll();
 
 try{const p=JSON.parse(localStorage.getItem("kbn")||"null");if(p){S.b=new Set(p.b);S.s=new Set(p.s);S.ort=p.ort;S.zeit=p.zeit||"all";S.sort=p.sort==="rel"?"new":(p.sort||"new");S.img=!!p.img;$("sort").value=S.sort;$("onlyimg").checked=S.img}}catch(e){}
 $("grid").innerHTML=`<div class="empty" style="grid-column:1/-1">Artikel werden geladen …</div>`;
