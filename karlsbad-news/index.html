@@ -145,6 +145,18 @@ mark{background:var(--hl);color:var(--hl-ink);border-radius:2px;padding:0 1px}
 .empty{padding:48px 16px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r)}
 .loadmore{display:block;margin:24px auto 0;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:10px 22px;font-weight:700;cursor:pointer}
 .proto{font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);margin:32px 0 0;padding-block:16px 32px}
+.ov{position:fixed;inset:0;z-index:20;background:rgba(10,16,14,.6);display:flex;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.ov[hidden]{display:none}
+.ovbox{width:min(1040px,100%);display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;min-height:0}
+.ovhead{display:flex;align-items:center;gap:10px 14px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ovtitle{font-family:var(--font-display);font-weight:700;font-size:1.05rem;line-height:1.25;flex:1 1 220px;min-width:0;overflow-wrap:anywhere;margin:0}
+.ovbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 14px;font-weight:600;font-size:.9rem;cursor:pointer;text-decoration:none;white-space:nowrap}
+.ovbtn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ovnote{font-size:.78rem;color:var(--muted);padding:6px 14px;border-bottom:1px solid var(--line);margin:0}
+.ovbody{position:relative;flex:1;min-height:0;background:#fff}
+.ovbody p{position:absolute;inset:0;display:grid;place-items:center;color:#555;margin:0;font-size:.95rem}
+.ovbody iframe{position:relative;width:100%;height:100%;border:0;background:#fff;display:block}
+@media (max-width:700px){.ov{padding:0}.ovbox{border-radius:0;border:0;width:100%}}
 .totop{position:fixed;z-index:6;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--ink);color:var(--bg);display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.25)}
 .totop:hover{background:var(--accent);color:var(--accent-ink)}
 
@@ -206,6 +218,18 @@ mark{background:var(--hl);color:var(--hl-ink);border-radius:2px;padding:0 1px}
   <p class="proto">Inhalte und Bilder: Gemeinde Karlsbad, <a href="https://www.karlsbad.de/news?action=view_everything" target="_blank" rel="noopener">karlsbad.de</a>. Diese Übersicht zeigt nur Teaser; alle Links führen zum Originalartikel. Täglich automatisch aktualisiert. Neuester Artikel: <span id="stand">–</span>. · <a href="https://impressum.kelsaka.de" target="_blank" rel="noopener">Impressum</a></p>
 </main>
 
+<div class="ov" id="ov" hidden role="dialog" aria-modal="true" aria-labelledby="ovtitle">
+  <div class="ovbox">
+    <div class="ovhead">
+      <h2 class="ovtitle" id="ovtitle">Artikel</h2>
+      <a class="ovbtn primary" id="ovorig" href="#" target="_blank" rel="noopener">Im Original öffnen ↗</a>
+      <button class="ovbtn" id="ovclose" type="button" aria-label="Schließen">✕ Schließen</button>
+    </div>
+    <p class="ovnote">Der Artikel wird direkt von karlsbad.de geladen; dabei sieht die Gemeinde bzw. ihr Dienstleister Ihre IP-Adresse. Bleibt der Bereich leer, bitte „Im Original öffnen“ nutzen.</p>
+    <div class="ovbody"><p id="ovload">Artikel wird geladen …</p><iframe id="ovframe" title="Artikel von karlsbad.de" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe></div>
+  </div>
+</div>
+
 <button class="totop" id="totop" type="button" hidden aria-label="Nach oben"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
 
 <script>
@@ -218,7 +242,7 @@ const ORTE=["Auerbach","Ittersbach","Langensteinbach","Mutschelbach","Spielberg"
 const TODAY=new Date();
 const ZEIT=[{k:"all",n:"Alle"},{k:"7",n:"7 Tage"},{k:"30",n:"30 Tage"},{k:"year",n:"2026"},{k:"old",n:"Älter"}];
 const PAGE=48;
-const S={b:new Set(),s:new Set(),ort:null,zeit:"all",q:"",sort:"new",img:false,shown:PAGE};
+const S={open:null,b:new Set(),s:new Set(),ort:null,zeit:"all",q:"",sort:"new",img:false,shown:PAGE};
 let DATA=[];
 const $=id=>document.getElementById(id);
 const norm=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/ß/g,"ss");
@@ -297,7 +321,7 @@ function card(r,terms){
     ${img}
     <div class="body">
       <div class="meta"><button type="button" class="pill" data-b="${r.b}" title="Alle Artikel im Bereich ${esc(BN[r.b])}">${esc(BN[r.b])}</button><button type="button" class="label" title="${esc(path)}" data-s="${esc(r.b+"|"+r.s)}">${hl(r.c,terms)}</button>${r.live===false?'<span class="arch" title="Nicht mehr in der Gesamtansicht von karlsbad.de">Archiv</span>':""}<time class="date${old?" old":""}" datetime="${r.d}" ${old?'title="Älter als ein Jahr"':""}>${fmt(r.d)}</time></div>
-      <h2><a href="${url}" target="_blank" rel="noopener">${hl(r.t,terms)}</a></h2>
+      <h2><a href="${url}" data-id="${r.id}" target="_blank" rel="noopener">${hl(r.t,terms)}</a></h2>
       <p>${hl(r.x,terms)}</p>
       <div class="more"><span class="orte">${r.o.map(o=>`<span>${o}</span>`).join("")}</span><span class="go">Zum Artikel ↗</span></div>
     </div></article>`;
@@ -316,7 +340,7 @@ function render(){
 const upd=()=>{S.shown=PAGE;render()};
 
 /* Zustand <-> URL (?q=…&b=sport&s=sport|SV%20Langensteinbach&ort=…&z=…&sort=…&img=1), damit Ansichten teilbar sind */
-function syncUrl(){
+function syncUrl(push){
   const P=new URLSearchParams();
   if(S.q)P.set("q",S.q);
   [...S.b].forEach(b=>P.append("b",b));
@@ -325,8 +349,9 @@ function syncUrl(){
   if(S.zeit!=="all")P.set("z",S.zeit);
   if(S.img)P.set("img","1");
   const dflt=S.q?"rel":"new"; if(S.sort!==dflt)P.set("sort",S.sort);
+  if(S.open)P.set("a",S.open);
   const qs=P.toString();
-  try{history.replaceState(null,"",location.pathname+(qs?"?"+qs:"")+location.hash)}catch(e){}
+  try{history[push?"pushState":"replaceState"](null,"",location.pathname+(qs?"?"+qs:"")+location.hash)}catch(e){}
 }
 function readUrl(){
   const P=new URLSearchParams(location.search);
@@ -338,6 +363,7 @@ function readUrl(){
   S.img=P.get("img")==="1";
   const so=P.get("sort"); S.sort=["new","old","rel","cat"].includes(so)?so:(S.q?"rel":"new");
   $("q").value=S.q;$("sort").value=S.sort;$("onlyimg").checked=S.img;
+  const a=P.get("a"); S.open=/^\d{1,9}$/.test(a||"")?a:null;
 }
 async function copyLink(btn){
   const url=location.href;let ok=false;
@@ -347,6 +373,8 @@ async function copyLink(btn){
 }
 
 document.addEventListener("click",e=>{
+  const al=e.target.closest("a[data-id]");
+  if(al&&e.button===0&&!(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)){e.preventDefault();lastFocus=al;openArticle(al.dataset.id);return}
   const t=e.target.closest("button");if(!t)return;
   if(t.dataset.b!==undefined&&t.classList.contains("chip")){const b=t.dataset.b;if(!b)S.b.clear();else S.b.has(b)?S.b.delete(b):S.b.add(b);upd()}
   else if(t.dataset.z){S.zeit=t.dataset.z;upd()}
@@ -366,11 +394,46 @@ document.addEventListener("change",e=>{
   if(e.target.id==="onlyimg"){S.img=e.target.checked;upd()}
 });
 let deb;$("q").addEventListener("input",e=>{clearTimeout(deb);deb=setTimeout(()=>{S.q=e.target.value.trim();if(S.q&&S.sort==="new"){S.sort="rel";$("sort").value="rel"}upd()},120)});
+/* Artikel-Overlay: Druckansicht von karlsbad.de im Iframe (ohne Menü/Kopf) */
+let pushedOpen=false,lastFocus=null;
+const artUrl=(id,print)=>`https://www.karlsbad.de/news?action=view_one_article&article_id=${id}`+(print?"&show_frame=false&print=true":"");
+function showOverlay(id){
+  const r=DATA.find(x=>String(x.id)===String(id));
+  $("ovtitle").textContent=r?r.t:"Artikel";
+  $("ovorig").href=artUrl(id,false);
+  $("ovload").hidden=false;
+  const f=$("ovframe");f.onload=()=>{$("ovload").hidden=true};
+  f.src=artUrl(id,true);
+  $("ov").hidden=false;document.body.style.overflow="hidden";
+  $("ovclose").focus();
+}
+function hideOverlay(){
+  $("ov").hidden=true;document.body.style.overflow="";
+  $("ovframe").src="about:blank";
+  if(lastFocus){try{lastFocus.focus({preventScroll:true})}catch(e){}lastFocus=null}
+}
+function openArticle(id){
+  S.open=String(id);pushedOpen=true;syncUrl(true);showOverlay(id);
+}
+function closeArticle(){
+  if(!S.open)return;
+  S.open=null;hideOverlay();
+  if(pushedOpen){pushedOpen=false;history.back()}else syncUrl(false);
+}
+addEventListener("popstate",()=>{
+  const a=new URLSearchParams(location.search).get("a");
+  if(a&&/^\d{1,9}$/.test(a)){S.open=a;showOverlay(a)}
+  else if(S.open){S.open=null;pushedOpen=false;hideOverlay()}
+});
+$("ovclose").addEventListener("click",closeArticle);
+$("ov").addEventListener("click",e=>{if(e.target===$("ov"))closeArticle()});
+
 function toggleTools(open){const b=$("toolbtn"),pn=$("panel");open=open??b.getAttribute("aria-expanded")!=="true";
   b.setAttribute("aria-expanded",open);pn.hidden=!open;if(open)$("q").focus({preventScroll:true})}
 $("toolbtn").addEventListener("click",()=>toggleTools());
 document.addEventListener("keydown",e=>{
   if(e.key==="/"&&!/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)){e.preventDefault();toggleTools(true)}
+  else if(e.key==="Escape"&&S.open){closeArticle()}
   else if(e.key==="Escape"&&!$("panel").hidden){toggleTools(false);$("toolbtn").focus()}});
 
 const tt=$("totop");
@@ -380,7 +443,7 @@ addEventListener("scroll",onScroll,{passive:true});onScroll();
 readUrl();
 $("grid").innerHTML=`<div class="empty" style="grid-column:1/-1">Artikel werden geladen …</div>`;
 fetch("articles.json").then(r=>r.json()).then(d=>{
-  DATA=d.map(r=>({...r,_t:norm(r.t),_x:norm(r.x),_c:norm(r.p.join(" ")+" "+r.c)}));const f=d.map(r=>r.d).sort().pop();$("stand").textContent=f?fmt(f):"–";render();
+  DATA=d.map(r=>({...r,_t:norm(r.t),_x:norm(r.x),_c:norm(r.p.join(" ")+" "+r.c)}));const f=d.map(r=>r.d).sort().pop();$("stand").textContent=f?fmt(f):"–";render();if(S.open)showOverlay(S.open);
 }).catch(()=>{$("grid").innerHTML=`<div class="empty" style="grid-column:1/-1">Die Artikeldaten konnten nicht geladen werden. Seite neu laden.</div>`});
 </script>
 
