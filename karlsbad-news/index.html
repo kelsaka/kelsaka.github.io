@@ -161,6 +161,7 @@ mark{background:var(--hl);color:var(--hl-ink);border-radius:2px;padding:0 1px}
         </button>
         <div class="count" id="count">–</div>
         <div class="active" id="active"></div>
+        <button class="reset" id="copylink" type="button" hidden title="Link zu dieser Ansicht kopieren">Link kopieren</button>
         <button class="reset" id="reset" type="button" hidden>Zurücksetzen</button>
       </div>
       <section class="panel" id="panel" aria-label="Suche und Filter" hidden>
@@ -274,7 +275,7 @@ function renderActive(){
   if(S.zeit!=="all")t.push(["Zeitraum: "+ZEIT.find(z=>z.k===S.zeit).n,"zeit",""]);
   if(S.q)t.push([`„${S.q}“`,"q",""]);
   if(S.img)t.push(["mit Bild","img",""]);
-  $("badge").textContent=t.length;$("badge").hidden=!t.length;$("reset").hidden=!t.length;
+  $("badge").textContent=t.length;$("badge").hidden=!t.length;$("reset").hidden=!t.length;$("copylink").hidden=!t.length;
   $("active").innerHTML=t.map(([l,k,v])=>`<span class="tag">${esc(l)}<button type="button" aria-label="Filter ${esc(l)} entfernen" data-rm="${k}" data-v="${esc(v)}">×</button></span>`).join("");
 }
 function card(r,terms){
@@ -300,9 +301,40 @@ function render(){
   $("more").hidden=res.length<=S.shown;
   $("more").textContent=`Weitere ${Math.min(PAGE,res.length-S.shown)} Artikel laden`;
   renderBereiche();renderTree();renderSeg();renderActive();
-  try{localStorage.setItem("kbn",JSON.stringify({b:[...S.b],s:[...S.s],ort:S.ort,zeit:S.zeit,sort:S.sort,img:S.img}))}catch(e){}
+  syncUrl();
 }
 const upd=()=>{S.shown=PAGE;render()};
+
+/* Zustand <-> URL (?q=…&b=sport&s=sport|SV%20Langensteinbach&ort=…&z=…&sort=…&img=1), damit Ansichten teilbar sind */
+function syncUrl(){
+  const P=new URLSearchParams();
+  if(S.q)P.set("q",S.q);
+  [...S.b].forEach(b=>P.append("b",b));
+  [...S.s].forEach(x=>P.append("s",x));
+  if(S.ort)P.set("ort",S.ort);
+  if(S.zeit!=="all")P.set("z",S.zeit);
+  if(S.img)P.set("img","1");
+  const dflt=S.q?"rel":"new"; if(S.sort!==dflt)P.set("sort",S.sort);
+  const qs=P.toString();
+  try{history.replaceState(null,"",location.pathname+(qs?"?"+qs:"")+location.hash)}catch(e){}
+}
+function readUrl(){
+  const P=new URLSearchParams(location.search);
+  S.q=(P.get("q")||"").trim();
+  S.b=new Set(P.getAll("b").filter(b=>BN[b]));
+  S.s=new Set(P.getAll("s").filter(x=>/^[a-z]+\|.+/.test(x)&&BN[x.split("|")[0]]));
+  const o=P.get("ort"); S.ort=ORTE.includes(o)?o:null;
+  const z=P.get("z"); S.zeit=ZEIT.some(x=>x.k===z)?z:"all";
+  S.img=P.get("img")==="1";
+  const so=P.get("sort"); S.sort=["new","old","rel","cat"].includes(so)?so:(S.q?"rel":"new");
+  $("q").value=S.q;$("sort").value=S.sort;$("onlyimg").checked=S.img;
+}
+async function copyLink(btn){
+  const url=location.href;let ok=false;
+  try{await navigator.clipboard.writeText(url);ok=true}catch(e){
+    try{const t=document.createElement("textarea");t.value=url;t.style.cssText="position:fixed;opacity:0";document.body.appendChild(t);t.select();ok=document.execCommand("copy");t.remove()}catch(e2){}}
+  const old=btn.textContent;btn.textContent=ok?"Link kopiert ✓":"Link in Adresszeile";setTimeout(()=>btn.textContent=old,1800);
+}
 
 document.addEventListener("click",e=>{
   const t=e.target.closest("button");if(!t)return;
@@ -311,10 +343,11 @@ document.addEventListener("click",e=>{
   else if(t.dataset.o!==undefined){S.ort=t.dataset.o||null;upd()}
   else if(t.classList.contains("label")){S.s=new Set([t.dataset.s]);S.b.clear();upd();window.scrollTo({top:0,behavior:"smooth"})}
   else if(t.classList.contains("pill")){S.b=new Set([t.dataset.b]);S.s.clear();upd();window.scrollTo({top:0,behavior:"smooth"})}
+  else if(t.id==="copylink"){copyLink(t)}
   else if(t.id==="totop"){window.scrollTo({top:0,behavior:"smooth"})}
   else if(t.dataset.rm){const k=t.dataset.rm,v=t.dataset.v;
-    if(k==="b")S.b.delete(v);if(k==="s")S.s.delete(v);if(k==="ort")S.ort=null;if(k==="zeit")S.zeit="all";if(k==="q"){S.q="";$("q").value=""}if(k==="img"){S.img=false;$("onlyimg").checked=false}upd()}
-  else if(t.id==="reset"||t.hasAttribute("data-resetall")){S.b.clear();S.s.clear();S.ort=null;S.zeit="all";S.q="";S.img=false;$("q").value="";$("onlyimg").checked=false;upd()}
+    if(k==="b")S.b.delete(v);if(k==="s")S.s.delete(v);if(k==="ort")S.ort=null;if(k==="zeit")S.zeit="all";if(k==="q"){S.q="";$("q").value="";if(S.sort==="rel"){S.sort="new";$("sort").value="new"}}if(k==="img"){S.img=false;$("onlyimg").checked=false}upd()}
+  else if(t.id==="reset"||t.hasAttribute("data-resetall")){S.b.clear();S.s.clear();S.ort=null;S.zeit="all";S.q="";S.img=false;S.sort="new";$("q").value="";$("onlyimg").checked=false;$("sort").value="new";upd()}
   else if(t.id==="more"){S.shown+=PAGE;render()}
 });
 document.addEventListener("change",e=>{
@@ -334,7 +367,7 @@ const tt=$("totop");
 const onScroll=()=>{tt.hidden=window.scrollY<400};
 addEventListener("scroll",onScroll,{passive:true});onScroll();
 
-try{const p=JSON.parse(localStorage.getItem("kbn")||"null");if(p){S.b=new Set(p.b);S.s=new Set(p.s);S.ort=p.ort;S.zeit=p.zeit||"all";S.sort=p.sort==="rel"?"new":(p.sort||"new");S.img=!!p.img;$("sort").value=S.sort;$("onlyimg").checked=S.img}}catch(e){}
+readUrl();
 $("grid").innerHTML=`<div class="empty" style="grid-column:1/-1">Artikel werden geladen …</div>`;
 fetch("articles.json").then(r=>r.json()).then(d=>{
   DATA=d.map(r=>({...r,_t:norm(r.t),_x:norm(r.x),_c:norm(r.p.join(" ")+" "+r.c)}));const f=d.map(r=>r.d).sort().pop();$("stand").textContent=f?fmt(f):"–";render();
